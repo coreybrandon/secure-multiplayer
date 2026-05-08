@@ -26,6 +26,16 @@ func main() {
 	if port == "" {
 		port = "3000"
 	}
+
+	srv := &http.Server{Addr: ":" + port, Handler: handler.SecurityHeaders(mux)}
+
+	go func() {
+		<-ctx.Done()
+		srv.Shutdown(context.Background())
+	}()
+
 	log.Printf("Listening on :%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, handler.SecurityHeaders(mux)))
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
 }
