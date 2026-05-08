@@ -1,6 +1,8 @@
+// Package hub manages connected clients and the game event loop.
 package hub
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -61,7 +63,7 @@ func NewHub() *Hub {
 	}
 }
 
-// Register upgrades a connection and joins the game. Safe to call from any goroutine.
+// Register joins a player to the game. Safe to call from any goroutine.
 func (h *Hub) Register(conn *websocket.Conn) {
 	id := fmt.Sprintf("p-%d", nextID.Add(1))
 	c := &Client{
@@ -75,9 +77,13 @@ func (h *Hub) Register(conn *websocket.Conn) {
 	go c.readPump()
 }
 
-func (h *Hub) Run() {
+// Run is the single-threaded event loop for all game state mutations.
+// It exits when ctx is cancelled.
+func (h *Hub) Run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case c := <-h.register:
 			h.clients[c.id] = c
 			h.players[c.id] = game.NewPlayer(c.id)
@@ -140,7 +146,7 @@ func (h *Hub) sendTo(c *Client, msg OutboundMsg) {
 	}
 	select {
 	case c.send <- data:
-	default:
+	default: // drop message if client send buffer is full (backpressure)
 	}
 }
 
@@ -153,7 +159,7 @@ func (h *Hub) broadcastAll(msg OutboundMsg) {
 	for _, c := range h.clients {
 		select {
 		case c.send <- data:
-		default:
+		default: // drop message if client send buffer is full (backpressure)
 		}
 	}
 }
@@ -170,7 +176,7 @@ func (h *Hub) broadcastExcept(excludeID string, msg OutboundMsg) {
 		}
 		select {
 		case c.send <- data:
-		default:
+		default: // drop message if client send buffer is full (backpressure)
 		}
 	}
 }

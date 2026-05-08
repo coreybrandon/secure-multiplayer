@@ -4,6 +4,11 @@ import (
 	"net/http"
 )
 
+const (
+	indexHTML = "views/index.html"
+	publicDir = "public"
+)
+
 func NewStaticHandler() http.Handler {
 	mux := http.NewServeMux()
 
@@ -12,10 +17,10 @@ func NewStaticHandler() http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		http.ServeFile(w, r, "views/index.html")
+		http.ServeFile(w, r, indexHTML)
 	})
 
-	fs := http.FileServer(http.Dir("public"))
+	fs := http.FileServer(http.Dir(publicDir))
 	mux.Handle("/public/", http.StripPrefix("/public/", fs))
 
 	return mux

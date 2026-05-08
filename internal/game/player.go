@@ -1,7 +1,7 @@
+// Package game contains the core game entities and rules.
 package game
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"sort"
@@ -11,6 +11,14 @@ const (
 	CanvasWidth  = 640
 	CanvasHeight = 480
 	PlayerSize   = 30
+	MaxMoveDist  = 20
+)
+
+const (
+	dirUp    = "up"
+	dirDown  = "down"
+	dirLeft  = "left"
+	dirRight = "right"
 )
 
 type Player struct {
@@ -29,17 +37,17 @@ func NewPlayer(id string) *Player {
 }
 
 func (p *Player) MovePlayer(dir string, dist float64) {
-	if dist > 20 {
-		dist = 20
+	if dist > MaxMoveDist {
+		dist = MaxMoveDist
 	}
 	switch dir {
-	case "up":
+	case dirUp:
 		p.Y = math.Max(0, p.Y-dist)
-	case "down":
+	case dirDown:
 		p.Y = math.Min(CanvasHeight-PlayerSize, p.Y+dist)
-	case "left":
+	case dirLeft:
 		p.X = math.Max(0, p.X-dist)
-	case "right":
+	case dirRight:
 		p.X = math.Min(CanvasWidth-PlayerSize, p.X+dist)
 	}
 }
@@ -48,18 +56,18 @@ func (p *Player) Collision(c *Collectible) bool {
 	return math.Abs(p.X-c.X) < PlayerSize && math.Abs(p.Y-c.Y) < PlayerSize
 }
 
-func (p *Player) CalculateRank(players []*Player) string {
+func (p *Player) Rank(players []*Player) (rank, total int) {
 	sorted := make([]*Player, len(players))
 	copy(sorted, players)
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].Score > sorted[j].Score
 	})
-	rank := len(players)
+	rank = len(players)
 	for i, pl := range sorted {
 		if pl.ID == p.ID {
 			rank = i + 1
 			break
 		}
 	}
-	return fmt.Sprintf("Rank: %d / %d", rank, len(players))
+	return rank, len(players)
 }

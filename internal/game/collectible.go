@@ -3,8 +3,15 @@ package game
 import (
 	"fmt"
 	"math/rand"
-	"time"
+	"sync/atomic"
 )
+
+const (
+	minCollectibleValue = 1
+	maxCollectibleValue = 10
+)
+
+var collectibleID atomic.Uint64
 
 type Collectible struct {
 	ID    string  `json:"id"`
@@ -15,9 +22,9 @@ type Collectible struct {
 
 func NewCollectible() *Collectible {
 	return &Collectible{
-		ID:    fmt.Sprintf("c-%d", time.Now().UnixNano()),
+		ID:    fmt.Sprintf("c-%d", collectibleID.Add(1)),
 		X:     rand.Float64() * (CanvasWidth - PlayerSize),
 		Y:     rand.Float64() * (CanvasHeight - PlayerSize),
-		Value: rand.Intn(10) + 1,
+		Value: rand.Intn(maxCollectibleValue-minCollectibleValue+1) + minCollectibleValue,
 	}
 }

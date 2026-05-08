@@ -1,18 +1,19 @@
 package game
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+import "testing"
 
 func TestNewCollectible_Fields(t *testing.T) {
 	c := NewCollectible()
-	assert.NotEmpty(t, c.ID)
-	assert.GreaterOrEqual(t, c.X, 0.0)
-	assert.Less(t, c.X, float64(CanvasWidth))
-	assert.GreaterOrEqual(t, c.Y, 0.0)
-	assert.Less(t, c.Y, float64(CanvasHeight))
-	assert.Greater(t, c.Value, 0)
-	assert.LessOrEqual(t, c.Value, 10)
+	if c.ID == "" {
+		t.Error("ID is empty")
+	}
+	if c.X < 0 || c.X >= CanvasWidth {
+		t.Errorf("X = %v out of canvas bounds", c.X)
+	}
+	if c.Y < 0 || c.Y >= CanvasHeight {
+		t.Errorf("Y = %v out of canvas bounds", c.Y)
+	}
+	if c.Value < minCollectibleValue || c.Value > maxCollectibleValue {
+		t.Errorf("Value = %d, want between %d and %d", c.Value, minCollectibleValue, maxCollectibleValue)
+	}
 }

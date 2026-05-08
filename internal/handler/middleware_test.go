@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSecurityHeaders(t *testing.T) {
@@ -17,11 +15,26 @@ func TestSecurityHeaders(t *testing.T) {
 	h.ServeHTTP(rec, req)
 
 	hdr := rec.Header()
-	assert.Equal(t, "nosniff", hdr.Get("X-Content-Type-Options"))
-	assert.Equal(t, "1; mode=block", hdr.Get("X-XSS-Protection"))
-	assert.Equal(t, "no-store", hdr.Get("Surrogate-Control"))
-	assert.Equal(t, "no-store, no-cache, must-revalidate, proxy-revalidate", hdr.Get("Cache-Control"))
-	assert.Equal(t, "no-cache", hdr.Get("Pragma"))
-	assert.Equal(t, "0", hdr.Get("Expires"))
-	assert.Equal(t, "PHP 7.4.3", hdr.Get("X-Powered-By"))
+	tests := []struct {
+		header string
+		want   string
+	}{
+		{"X-Content-Type-Options", "nosniff"},
+		{"X-XSS-Protection", "1; mode=block"},
+		{"X-Frame-Options", "DENY"},
+		{"Referrer-Policy", "no-referrer"},
+		{"Permissions-Policy", "geolocation=(), microphone=(), camera=()"},
+		{"Content-Security-Policy", "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-ancestors 'none'"},
+		{"Surrogate-Control", "no-store"},
+		{"Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate"},
+		{"Pragma", "no-cache"},
+		{"Expires", "0"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.header, func(t *testing.T) {
+			if got := hdr.Get(tc.header); got != tc.want {
+				t.Errorf("%s = %q, want %q", tc.header, got, tc.want)
+			}
+		})
+	}
 }

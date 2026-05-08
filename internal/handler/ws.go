@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// upgrader accepts connections from any origin; this is intentional for a toy game with no auth.
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
